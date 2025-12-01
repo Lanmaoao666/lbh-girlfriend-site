@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>谁是LBH的女朋友？</title>
+    <style>
+        /* 婚庆风主题 CSS */
+        @import url('https://fonts.googleapis.com/css2?family=Zhi+Mang+Xing&display=swap');
+        
+        body {
+            font-family: 'Georgia', serif;
+            background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%); /* 粉色渐变背景 */
+            color: #4a148c; /* 深紫红色文字 */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            border: 5px solid #ffab91; /* 珊瑚金边框 */
+        }
+
+        h1 {
+            font-family: 'Zhi Mang Xing', cursive; /* 甜美手写字体 */
+            font-size: 2.5em;
+            color: #e91e63; /* 玫瑰红标题 */
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+            border-bottom: 3px dashed #f48fb1;
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+
+        .custom-file-upload {
+            border: 2px dashed #f06292;
+            display: inline-block;
+            padding: 15px 30px;
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 1.1em;
+            color: #f06292;
+            transition: background-color 0.3s;
+            margin-bottom: 20px;
+        }
+        
+        .custom-file-upload:hover {
+            background-color: #ffebee;
+        }
+
+        button {
+            background-color: #ff80ab; /* 粉色按钮 */
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #e91e63;
+        }
+
+        #preview-area {
+            margin-top: 20px;
+            max-height: 300px;
+            overflow: hidden;
+            border-radius: 10px;
+            border: 2px solid #ffcdd2;
+        }
+
+        /* 隐藏用于生成的 Canvas */
+        #result-canvas {
+            display: none;
+        }
+
+        .note {
+            margin-top: 20px;
+            color: #888;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>谁是LBH的女朋友？</h1>
+
+        <div class="input-section">
+            <input type="file" id="image-upload" accept="image/*">
+            <label for="image-upload" class="custom-file-upload" id="upload-label">
+                点击上传你的照片 (最好是正方形哦)
+            </label>
+        </div>
+        
+        <div id="preview-area">
+            <img id="image-preview" style="max-width: 100%; display: none;">
+        </div>
+
+        <button id="generate-btn" disabled onclick="generateCertificate()">
+            生成甜蜜认证截图！
+        </button>
+
+        <p class="note" id="status-text">请先上传图片...</p>
+    </div>
+
+    <canvas id="result-canvas" width="600" height="600"></canvas>
+
+    <script>
+        const uploadInput = document.getElementById('image-upload');
+        const previewImg = document.getElementById('image-preview');
+        const generateBtn = document.getElementById('generate-btn');
+        const statusText = document.getElementById('status-text');
+        const uploadLabel = document.getElementById('upload-label');
+        let uploadedImage = null; // 用于存储 Image 对象
+
+        // 1. 处理图片上传和预览
+        uploadInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    previewImg.src = e.target.result;
+                    previewImg.style.display = 'block';
+                    uploadLabel.textContent = `已上传: ${file.name}`;
+
+                    // 创建 Image 对象以用于 Canvas 绘制
+                    uploadedImage = new Image();
+                    uploadedImage.onload = () => {
+                        generateBtn.disabled = false;
+                        statusText.textContent = '图片已准备好，点击生成认证。';
+                    };
+                    uploadedImage.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // 2. 核心功能：在 Canvas 上绘制并生成图片
+        function generateCertificate() {
+            if (!uploadedImage) return;
+
+            const canvas = document.getElementById('result-canvas');
+            const ctx = canvas.getContext('2d');
+            const size = 600; // 截图尺寸
+
+            // --- 2.1 绘制甜美背景和边框 ---
+            ctx.clearRect(0, 0, size, size);
+            
+            // 背景渐变
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#fff3e0'); // 奶油白
+            gradient.addColorStop(1, '#ffcdd2'); // 浅粉色
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+
+            // 外层粉色边框
+            ctx.strokeStyle = '#f48fb1';
+            ctx.lineWidth = 20;
+            ctx.strokeRect(10, 10, size - 20, size - 20); 
+
+            // --- 2.2 绘制上传的图片 ---
+            const imageSize = 400; // 图片在中央显示的大小
+            const imageX = (size - imageSize) / 2;
+            const imageY = 100;
+            
+            // 计算保持图片比例的缩放
+            const ratio = Math.min(imageSize / uploadedImage.width, imageSize / uploadedImage.height);
+            const drawWidth = uploadedImage.width * ratio;
+            const drawHeight = uploadedImage.height * ratio;
+            const drawX = imageX + (imageSize - drawWidth) / 2;
+            const drawY = imageY + (imageSize - drawHeight) / 2;
+            
+            ctx.save();
+            // 裁剪成圆形 (可选，增加浪漫感)
+            ctx.beginPath();
+            ctx.arc(size / 2, size / 2, imageSize / 2 * 0.9, 0, Math.PI * 2, true); 
+            ctx.closePath();
+            ctx.clip();
+            
+            // 绘制图片 (填充整个裁剪区域)
+            ctx.drawImage(uploadedImage, drawX, drawY, drawWidth, drawHeight);
+            ctx.restore();
+            
+            // --- 2.3 绘制标题和甜美文字 ---
+            
+            // 标题样式
+            ctx.fillStyle = '#e91e63';
+            ctx.font = 'bold 40px "Zhi Mang Xing", cursive';
+            ctx.textAlign = 'center';
+            ctx.fillText("LBH 女朋友 官方认证", size / 2, 60);
+
+            // 认证文字
+            ctx.fillStyle = '#4a148c';
+            ctx.font = '24px "Georgia", serif';
+            ctx.fillText("恭喜你！", size / 2, 530);
+            
+            ctx.font = 'bold 30px "Zhi Mang Xing", cursive';
+            ctx.fillText("从今天起，你就是LBH最甜的女朋友啦！", size / 2, 570);
+
+
+            // --- 2.4 生成并下载图片 ---
+            const dataURL = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.href = dataURL;
+            link.download = 'LBH-Sweet-Girlfriend-Certificate.png';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            statusText.textContent = '截图已生成并开始下载！';
+        }
+    </script>
+</body>
+</html>
